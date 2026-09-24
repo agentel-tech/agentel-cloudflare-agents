@@ -43,8 +43,9 @@ Model inference uses a configurable OpenAI-compatible Chat Completions API.
 The defaults point to OpenAI (`https://api.openai.com/v1`, model
 `gpt-4.1-mini`); set a different compatible base URL and model name to use
 another provider. The local chat path was exercised before this adapter change;
-the generic endpoint has not been re-tested. The sample has not been deployed
-or released as a public repository.
+the generic endpoint has not been re-tested. The source repository is public at
+[agentel-tech/agentel-cloudflare-agents](https://github.com/agentel-tech/agentel-cloudflare-agents),
+but the sample Worker has not been deployed.
 
 The default install includes the OpenAI-compatible adapter. The full guide in
 [`starter/README.md`](starter/README.md) also shows how to add the native

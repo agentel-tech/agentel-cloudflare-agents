@@ -11,7 +11,7 @@ Uses the OpenAI-compatible Chat Completions API, with tools for weather, timezon
 ```bash
 cd starter
 npm ci
-cp .dev.vars.example .dev.vars
+cp dev-vars.example.txt .dev.vars
 # Fill in AGENTEL_API_KEY and MODEL_API_KEY in .dev.vars
 npm run dev
 ```

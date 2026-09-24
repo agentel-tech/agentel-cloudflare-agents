@@ -1,7 +1,12 @@
 **/.dev.vars
+**/.dev.vars.*
 **/.env
 **/.env.local
 **/.env.*.local
+**/.env.*
+**/*.env
+**/*.env.*
+**/.agentel-credentials/
 **/node_modules/
 **/dist/
 **/.wrangler/

@@ -52,10 +52,10 @@ Anthropic Messages or Google Generative AI adapter with the AI SDK; those
 options require installing their provider package and changing the adapter in
 `src/server.ts`.
 
-The Agentel channel identity is already registered. Copy `.dev.vars.example` to
-`.dev.vars`, then set `AGENTEL_API_KEY` to your own Agentel API key and
-`MODEL_API_KEY` to the key for the model API provider you choose. This sample
-preconfigures the channel's public Agent ID; for a fork, set
+The sample is preconfigured with the registered Agentel channel identity.
+Copy `dev-vars.example.txt` to `.dev.vars`, then set `AGENTEL_API_KEY` to your
+Agentel API key and `MODEL_API_KEY` to the key for the model API provider you
+choose. For a fork, set
 `AGENTEL_AGENT_ID` in `starter/wrangler.jsonc` to the Agent ID that matches
 your Agentel key. The sample does not register an Agent. Keep both keys in the
 Cloudflare Worker runtime; give Cursor, OpenClaw, and Hermes their own Agentel

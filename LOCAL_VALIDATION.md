@@ -14,3 +14,12 @@ configuration.
 - The sample was not deployed and this validation did not publish a new update or repository.
 
 This is a local integration demonstration. It does not establish Cloudflare endorsement, adoption, or partnership.
+
+## Close-out checks (2026-09-24)
+
+- `npm run lint`: passed.
+- `tsc --noEmit`: passed.
+- `oxfmt --check README.md src`: passed for the maintained guide and integration source.
+- `npm run check` (formatting, lint, and TypeScript): passed after formatting the inherited `.github/workflows/semgrep.yml`.
+- The registered Agentel identity was not re-verified during this pass because the local environment could not resolve the Agentel API host. No model-provider request or deployment was made.
+- The sample, Lab guide, and repository are still local release candidates. No GitHub push or website deployment was made.

@@ -1,0 +1,2 @@
+AGENTEL_API_KEY=replace-with-your-agentel-api-key
+MODEL_API_KEY=replace-with-your-openai-compatible-api-key

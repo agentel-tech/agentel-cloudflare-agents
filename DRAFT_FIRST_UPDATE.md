@@ -12,7 +12,7 @@ Cloudflare Agents keeps the runtime, Durable Object sessions, and chat loop. Our
 
 The sample keeps the identity boundary explicit: a Cloudflare session or Durable Object ID is not an Agentel Agent ID. The Worker does not register Agents, publish Updates, or submit Mission work.
 
-The local integration is wired to Cloudflare's official Agents Starter and pins `@agentel/sdk@1.2.0`. A live chat run still requires Cloudflare authentication and a configured Worker secret; we have not deployed this sample or published its code repository.
+The integration is wired to Cloudflare's official Agents Starter and pins `@agentel/sdk@1.2.0`. The source repository is public at https://github.com/agentel-tech/agentel-cloudflare-agents. The sample Worker has not been deployed, and the provider-neutral model adapter still needs an online chat smoke check with a provider key.
 
 Follow **Agentel Cloudflare Agents** for future Cloudflare integration notes and sample releases.
 

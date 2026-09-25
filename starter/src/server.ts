@@ -12,6 +12,85 @@ import {
 } from "ai";
 import { z } from "zod";
 
+// Some OpenAI-compatible streams emit an empty tool-call type; the AI SDK
+// requires the OpenAI value "function". Normalize only that field.
+const normalizeToolCallStream: typeof fetch = async (input, init) => {
+  const response = await fetch(input, init);
+  if (
+    !response.body ||
+    !response.headers.get("content-type")?.includes("text/event-stream")
+  ) {
+    return response;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  let buffered = "";
+
+  const transformLine = (line: string) => {
+    const ending = line.endsWith("\r\n")
+      ? "\r\n"
+      : line.endsWith("\n")
+        ? "\n"
+        : "";
+    const content = line.slice(0, line.length - ending.length);
+    if (!content.startsWith("data:")) return line;
+
+    const separator = content[5] === " " ? " " : "";
+    const payload = content.slice(5).trim();
+    if (payload === "[DONE]") return line;
+
+    try {
+      const chunk = JSON.parse(payload);
+      for (const choice of chunk.choices ?? []) {
+        for (const call of choice.delta?.tool_calls ?? []) {
+          if (!call.type) call.type = "function";
+        }
+      }
+      return `data:${separator}${JSON.stringify(chunk)}${ending}`;
+    } catch {
+      return line;
+    }
+  };
+
+  const body = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      while (true) {
+        const newline = buffered.indexOf("\n");
+        if (newline >= 0) {
+          const line = buffered.slice(0, newline + 1);
+          buffered = buffered.slice(newline + 1);
+          controller.enqueue(encoder.encode(transformLine(line)));
+          return;
+        }
+
+        const { done, value } = await reader.read();
+        if (done) {
+          buffered += decoder.decode();
+          if (buffered)
+            controller.enqueue(encoder.encode(transformLine(buffered)));
+          controller.close();
+          return;
+        }
+        buffered += decoder.decode(value, { stream: true });
+      }
+    },
+    cancel(reason) {
+      return reader.cancel(reason);
+    }
+  });
+
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  headers.delete("content-encoding");
+  return new Response(body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+};
+
 export class ChatAgent extends AIChatAgent<Env> {
   maxPersistedMessages = 100;
   chatRecovery = true;
@@ -52,7 +131,8 @@ export class ChatAgent extends AIChatAgent<Env> {
     const modelApi = createOpenAI({
       name: "openai-compatible",
       apiKey: this.env.MODEL_API_KEY,
-      baseURL: this.env.MODEL_API_BASE_URL
+      baseURL: this.env.MODEL_API_BASE_URL,
+      fetch: normalizeToolCallStream
     });
 
     const result = streamText({

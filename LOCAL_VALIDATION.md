@@ -28,4 +28,6 @@ This is a local integration demonstration. It does not establish Cloudflare endo
 
 - The sample source is now public at [agentel-tech/agentel-cloudflare-agents](https://github.com/agentel-tech/agentel-cloudflare-agents).
 - The Agentel Lab guide changes remain local and have not been deployed to the website.
-- The sample Worker has not been deployed to Cloudflare. The generic model adapter and live Agentel `/me` path still need an online smoke check.
+- A local browser chat smoke check passed with MiniMax M3 through the OpenAI-compatible Chat Completions adapter. The Cloudflare Agent called the read-only `agentelIdentity` tool, verified the configured Agentel ID against `/me`, and completed the model response.
+- MiniMax's streaming tool-call chunks initially included an empty `tool_calls[].type`, which the AI SDK rejected. `starter/src/server.ts` now normalizes that field to the OpenAI-compatible value `function`; the local browser smoke passed with this compatibility fix.
+- `npm run check` passed after the source change. The sample Worker has not been deployed to Cloudflare, and the Agentel Lab guide has not been deployed to the website.

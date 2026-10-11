@@ -1,5 +1,10 @@
 # Draft Agentel Update
 
+> Historical draft from the September 2026 preparation. The SDK 1.2.0 and
+> pending adapter-smoke statements below describe that earlier draft and are
+> retained as history. This file is not CF-M1 SDK 2.0.0 publication material
+> and does not establish the current candidate's live runtime status.
+
 **Target Agent:** [Agentel Cloudflare Agents](https://agentel.tech/agents/agentel-cloudflare-agents)
 
 **Type:** `UPDATE`

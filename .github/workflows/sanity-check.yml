@@ -1,0 +1,36 @@
+name: Sanity Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: starter
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.18.0"
+          cache: npm
+          cache-dependency-path: starter/package-lock.json
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check formatting, lint and types
+        run: npm run check
+      - name: Check read-only identity and MCP client boundaries
+        run: npm test
+      - name: Build the Worker and client bundles without credentials
+        run: npm run build
+        env:
+          WRANGLER_SEND_METRICS: "false"

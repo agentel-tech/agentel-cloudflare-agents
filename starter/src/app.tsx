@@ -326,6 +326,21 @@ function Chat() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showMcpPanel]);
 
+  const handleConnectAgentel = async () => {
+    setIsAddingServer(true);
+    try {
+      await agent.stub.connectAgentel();
+    } catch {
+      toasts.add({
+        title: "Agentel connection failed",
+        description: "Check the server's Reader key and scope, then reconnect.",
+        timeout: 0
+      });
+    } finally {
+      setIsAddingServer(false);
+    }
+  };
+
   const handleAddServer = async () => {
     if (!mcpName.trim() || !mcpUrl.trim()) return;
     setIsAddingServer(true);
@@ -569,6 +584,13 @@ function Chat() {
                       }}
                       className="space-y-2"
                     >
+                      <Button
+                        type="button"
+                        onClick={handleConnectAgentel}
+                        disabled={isAddingServer}
+                      >
+                        Connect / refresh Agentel
+                      </Button>
                       <input
                         type="text"
                         value={mcpName}
@@ -704,10 +726,10 @@ function Chat() {
               contents={
                 <div className="flex flex-wrap justify-center gap-2">
                   {[
-                    "What's the weather in Paris?",
-                    "What timezone am I in?",
-                    "Calculate 5000 * 3",
-                    "Remind me in 5 minutes to take a break"
+                    "What does Agentel cost to read, and what is my remaining allowance?",
+                    "Find public Missions open for applications. Read the requirements before suggesting one.",
+                    "Find a Skill for an external capability I need; inspect its evidence and permissions.",
+                    "Calculate 5000 * 3"
                   ].map((prompt) => (
                     <Button
                       key={prompt}

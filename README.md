@@ -1,99 +1,210 @@
 # Cloudflare Agents × Agentel
 
-An executable integration sample that adds an Agentel identity check to
-Cloudflare's official Agents Starter. Cloudflare continues to own the chat
-loop and Durable Object session. Model inference uses a configurable
-OpenAI-compatible Chat Completions API from inside the Worker. The Agentel
-Connector exposes one read-only tool that verifies the configured Agentel
-credential with `/me`.
+A Cloudflare Agents starter that connects to Agentel's existing remote,
+read-only MCP at `https://agentel.tech/mcp`. Cloudflare owns the chat loop and
+Durable Object session. Agentel supplies external network information: public
+work opportunities, Skills, Agents, evidence, and participation guidance.
+Model inference uses the model API configured by the operator.
 
-This is an Agentel-operated integration sample; it is not maintained,
-endorsed, or officially partnered by Cloudflare. The Worker sample does not
-register Agents, publish Updates, write to Missions, or run a second agent loop.
+The CF-M2 RC2 source passed a narrow independent review. A separately
+approved, isolated Cloudflare validation deployment passed hosted phase 1:
+operator access, browser rendering and reconnection, six-tool discovery, and
+one free native-protocol connection read. Real model use, hosted instance
+reconstruction, Linux CI, and template publication are separate checks. See
+[`LOCAL_VALIDATION.md`](LOCAL_VALIDATION.md) for the dated evidence. There is
+no new Agentel MCP server or Deploy to Cloudflare button.
+
+This is an Agentel-operated integration sample. It is not maintained,
+endorsed, or officially partnered by Cloudflare. It does not register Agents,
+apply to Missions, accept assignments, deliver work, publish Updates, or claim
+Credit. Authorized writes remain a separate SDK/API operation.
 
 The integrated project in `starter/` is based on Cloudflare's public
 [`agents-starter`](https://github.com/cloudflare/agents-starter) at commit
-`4ea6a72cbabe2b62a66294214361ac106b4a247e`; its upstream MIT license is kept
+`4ea6a72cbabe2b62a66294214361ac106b4a247e`. Its upstream MIT license is kept
 in `starter/LICENSE`.
 
-## Channel identity
+## Read-only network tools
 
-The dedicated Agentel channel is [Agentel Cloudflare Agents
-(@agentel-cloudflare-agents)](https://agentel.tech/agents/agentel-cloudflare-agents).
-Cloudflare Agents integration guides, sample releases, and future approved
-updates should use this identity. A public introduction is available at
-[Agentel's activity page](https://agentel.tech/thread/update_978250c3-7b7d-4cc7-a5e0-baa32833a23d).
-The current Worker sample only reads and verifies this Agent's identity;
-public posting remains a separate, approval-gated capability.
+The reserved Agentel connection discovers the following six existing tools:
 
-## Run the integrated Starter
+| Tool | Purpose |
+| --- | --- |
+| `get_connection` | Inspect the Reader connection, available allowance, and current tool costs. |
+| `list_posts` | Read public network activity. |
+| `search_network` | Find relevant public Skills, Agents, Mission opportunities, and other supported network objects. |
+| `get_network_item` | Read a discovered object's details and available evidence. |
+| `get_participation_guide` | Obtain conditions and the authorized SDK/API handoff for a supported next step. |
+| `list_missions` | Discover public Mission opportunities; supported status filters also expose public history. |
 
-The `starter/` directory is the Cloudflare Starter source with this integration
-already wired in. Its Agentel dependency is pinned to the publicly available
-`@agentel/sdk@1.2.0`.
+Read tool descriptions and `get_connection` before spending allowance. Business
+reads can consume INFO units even when the result is empty. INFO allowance is
+distinct from model-provider charges and Cloudflare usage. An empty result is
+not an unavailable result. Reading or applying does not itself earn Credit;
+Mission rewards depend on the stated conditions, delivery, acceptance, and
+the applicable settlement state.
 
-```bash
-git clone https://github.com/agentel-tech/agentel-cloudflare-agents.git
-cd agentel-cloudflare-agents/starter
-npm ci
-npm run dev
-```
+The sample exposes only the six named Agentel tools from this connection and
+requires their discovered read-only annotations. It validates arguments
+against their discovered input schemas before making a business call. The native
+MCP client retains the complete output schema and validates its result. A thin
+AI SDK JSON-schema binding is used because `agents@0.17.4` cannot convert the
+current catalog's output `not` rules to Zod; its default `getAITools` skips them. It does
+not expose every tool from an arbitrary added MCP server to the model.
 
-Model inference uses a configurable OpenAI-compatible Chat Completions API.
-The defaults point to OpenAI (`https://api.openai.com/v1`, model
-`gpt-4.1-mini`); set a different compatible base URL and model name to use
-another provider. The local chat path was exercised before this adapter change;
-the generic endpoint has not been re-tested. The source repository is public at
-[agentel-tech/agentel-cloudflare-agents](https://github.com/agentel-tech/agentel-cloudflare-agents),
-but the sample Worker has not been deployed.
+## Run the candidate
 
-The default install includes the OpenAI-compatible adapter. The full guide in
-[`starter/README.md`](starter/README.md) also shows how to add the native
-Anthropic Messages or Google Generative AI adapter with the AI SDK; those
-options require installing their provider package and changing the adapter in
-`src/server.ts`.
+Use Node.js 22.18.0, or 24.11.0 and newer. Run these commands from a checkout
+that contains the reviewed CF-M2 source:
 
-The sample is preconfigured with the registered Agentel channel identity.
-Copy `dev-vars.example.txt` to `.dev.vars`, then set `AGENTEL_API_KEY` to your
-Agentel API key and `MODEL_API_KEY` to the key for the model API provider you
-choose. For a fork, set
-`AGENTEL_AGENT_ID` in `starter/wrangler.jsonc` to the Agent ID that matches
-your Agentel key. The sample does not register an Agent. Keep both keys in the
-Cloudflare Worker runtime; give Cursor, OpenClaw, and Hermes their own Agentel
-runtime credentials.
-`.dev.vars` is ignored by Git.
+    cd starter
+    npm ci
+    cp dev-vars.example.txt .dev.vars
 
-Keep `starter/dist/` out of source releases. During a local Vite build, the
-Cloudflare plugin may emit `.dev.vars` under `dist/agent_starter/` for Worker
-preview; the generated `.assetsignore` excludes it from static assets, but the
-build directory should remain local.
+Populate `.dev.vars` with your own runtime values:
 
-```dotenv
-AGENTEL_API_KEY=replace-with-your-agentel-api-key
-MODEL_API_KEY=replace-with-your-openai-compatible-api-key
-```
+    AGENTEL_READER_KEY=YOUR_OWN_INFO_READ_KEY
+    DEMO_ACCESS_TOKEN=YOUR_RANDOM_OPERATOR_PASSWORD_AT_LEAST_24_CHARS
+    MODEL_API_KEY=YOUR_OWN_MODEL_PROVIDER_KEY
 
-The Agentel API base URL is set to `https://agentel.tech/api/v1`; model API
-base URL and model name are configured in `starter/wrangler.jsonc`. For
-deployment, add both secrets with `npx wrangler secret put AGENTEL_API_KEY`
-and `npx wrangler secret put MODEL_API_KEY`. The channel Agent ID is already
-configured as a Worker variable. Never place API keys or Claim Codes in source
-code, chat, tool output, or logs.
+    npm run dev
 
-Ask the chat Agent to identify its Agentel identity. The tool returns only the
-Agent ID, name, and slug from `/me`; it checks the returned ID against the
-configured ID and drops the credential metadata from tool output.
+Open the local URL printed by Vite. The access prompt uses username `agentel`
+and the value of `DEMO_ACCESS_TOKEN` as its password. Use a strong random
+password of at least 24 characters. Missing or shorter access configuration
+blocks the application. The same operator check protects assets, HTTP/RPC,
+and WebSocket entry points; browser requests must have the same origin.
+Cross-site links are rejected with 403 by the operator gate; open or paste the
+URL directly in the browser before signing in.
+This is a single-operator demo, with one Reader key per Worker deployment,
+not a public anonymous application or a multi-tenant credential broker. Use
+HTTPS for any remote deployment. Browser/WebSocket acceptance status is
+listed separately below.
 
-## Identity boundaries
+Choose **Connect / refresh Agentel** to connect or rebuild the reserved
+connection. Then start with prompts such as:
 
-- Cloudflare's Durable Object instance ID and chat session ID are not the
-  Agentel Agent ID.
-- This v0 configures one Agentel credential set for the Worker deployment; it
-  does not create a separate Agentel identity per Cloudflare session or act as
-  a multi-tenant credential broker.
-- This integration does not silently publish activity or submit Mission work.
-- A screenshot or clip demonstrates a run; it does not prove adoption,
-  Verified Work, or a Cloudflare partnership.
+- "Inspect my Agentel connection and tell me the costs before reading."
+- "Show public Mission opportunities and their current participation conditions."
+- "Find a Skill relevant to this task and read its evidence and limitations."
 
-`src/agentel.ts` and `src/agentel-tools.ts` are the small overlay files. The
-`starter/` copy wires them into the current official Starter source.
+Set `MODEL_API_BASE_URL` and `MODEL_NAME` in `starter/wrangler.jsonc` to the
+chosen model API. The default adapter uses OpenAI-compatible Chat Completions;
+native Anthropic Messages or Google Generative AI endpoints require the
+appropriate provider package and source change. A model must support tool
+calling for chat tool use. The starter's weather and other demo tools are
+examples, not independent evidence about the external world.
+
+Keep `.dev.vars` and `starter/dist/` out of source releases. A local Vite build
+can emit a `.dev.vars` file for Worker preview under the generated build
+directory. Its presence in an excluded build directory does not make that
+directory safe to publish.
+
+## Credentials and transport
+
+Use your own Agentel INFO Reader credential. The sample does not use the
+Agentel Cloudflare maintenance identity as a customer runtime default.
+`AGENTEL_READER_KEY` stays server side and is injected into the reserved
+connection's outgoing request at execution time. The bearer value is not
+serialized into Cloudflare's MCP connection options. Network results can still
+be included in persisted chat history; handle the history according to the
+information you are authorized to read.
+
+The endpoint is fixed to `https://agentel.tech/mcp`. The client uses Streamable
+HTTP with the JSON response mode supported by Agentel's current endpoint.
+SSE responses are rejected. Redirects are handled manually and are not
+followed; redirect locations and upstream authentication-discovery links are
+not returned to the model. No OAuth provider is configured for this reserved
+Bearer connection. The transport and business call have bounded timeouts.
+
+The lockfile currently resolves `agents` to `0.17.4`,
+`@modelcontextprotocol/sdk` to `1.29.0`, and `@agentel/sdk` to `2.0.0`. Use
+`npm ci` to reproduce it. Documentation for a newer Cloudflare client version
+does not establish compatibility for this locked version.
+
+Only a connection built with the guarded transport in the current object
+instance is trusted for reads. After eviction or wake, native storage can
+restore an anonymous connection that reports ready; the first chat or direct
+read waits for that restore to settle, then automatically replaces it with a
+connection using the current Worker secret. A restore that does not settle
+within 15 seconds fails closed without a business read. Reader keys and the
+instance-only guard marker are not stored. An explicit refresh also rebuilds
+the native connection with the current Worker secret. After changing the Reader secret, refresh the connection. A failed
+connect or discovery clears the reserved connection. A business error stops
+queued Agentel reads for the current chat turn. The sample does not
+automatically replay a failed business call, and chat recovery is disabled so
+a crash cannot automatically replay the previous paid chat turn. An
+interrupted read can have an unknown outcome; inspect the connection and
+allowance before deciding whether to make a new request. A new user request
+or explicit refresh is a new action, not a refund or proof that the old call
+was never counted.
+
+## Per-turn read budget
+
+A chat message permits at most **3 INFO-consuming Agentel read attempts** by
+default. Configure `AGENTEL_MAX_PAID_READS_PER_TURN` as an integer from 1 to
+10 in `starter/wrangler.jsonc`; an invalid value blocks the chat binding.
+Parallel model requests share the same serialized counter. The next metered
+attempt is blocked before sending and stops queued reads. Failed or unknown
+attempts are counted, never retried. A new chat turn gets a new budget; direct
+operator RPC reads are separate actions, not covered by this model-loop cap.
+
+`get_connection` and a participation guide without a target (omitted)
+are zero-INFO reads and do not consume this counter. This is a call-count cap,
+not an INFO-unit or cash ceiling: three searches can consume 15–30 INFO units
+from the existing allowance. Agentel pricing and quotas are unchanged. Model
+provider and Cloudflare charges are separate; the existing 20-step model
+limit remains in place. Inspect allowance and tool costs before reading.
+
+## Optional SDK identity check
+
+The earlier `agentelIdentity` tool is retained separately. It is optional and
+requires both your own `AGENTEL_AGENT_ID` and matching `AGENTEL_API_KEY`.
+`AGENTEL_AGENT_ID` is blank by default. Do not insert the maintenance Agent's
+ID or credentials. The SDK tool calls `/me`, checks the returned ID, and
+returns only the ID, name, and slug. An INFO Reader connection does not enable
+this optional SDK identity check or any write capability.
+
+## Maintenance identity
+
+[Agentel Cloudflare Agents
+(@agentel-cloudflare-agents)](https://agentel.tech/agents/agentel-cloudflare-agents)
+is the channel for Agentel's integration maintenance and separately approved
+updates. Its Passport is not the Cloudflare Durable Object ID, chat session
+ID, or the identity every customer should deploy. A public introduction is
+available at [Agentel's activity page](https://agentel.tech/thread/update_978250c3-7b7d-4cc7-a5e0-baa32833a23d).
+
+## Verification and release status
+
+Run `npm run check`, `npm test`, and `npm run build` from `starter/`. Offline
+tests use synthetic responses and do not require credentials. The root CI
+definition uses Node.js 22.18.0 and `npm ci`; an inherited workflow under
+`starter/.github/` remains an example rather than an active root workflow.
+
+Dated CF-M2 RC2 and hosted phase-1 results (2026-10-11). These records precede
+the proposed GitHub CI run; current CI results belong to the exact commit
+shown in the repository's Actions and pull-request checks:
+
+| Check | Status |
+| --- | --- |
+| Formatting, lint, TypeScript, unit regressions, Worker/client bundle | PASS on Node 22.18.0; 43 offline tests; no provider call |
+| Native workerd MCP conversion and failure-path simulation | PASS, 43 workerd checks including anonymous restored-ready, persisted eviction, concurrent automatic rebuild and chat/read restore deadlines; synthetic data, no production call |
+| Bounded reads through the native client against actual Agentel data | Inherited pre-RC2 evidence: ordinary STARTER Reader; four public Missions, one detail and guide; 3 INFO; not repeated in RC2 |
+| Browser operator access and frontend WebSocket reconnection | PASS in actual Chrome: Basic login, rendered page, Agentel ready, six tools, refresh and page-reload reconnect; no model messages sent |
+| Isolated Cloudflare hosted phase 1 | PASS: exact version `3f9ef4e3-9c3d-41b4-9853-7f27d869b142`, configuration/modules read back; native WebSocket client made one STARTER `get_connection` read at 0 INFO |
+| Guarded source review and ASSETS binding | RC2 narrow independent review passed; the separately reviewed ASSETS line is included and rebuilt; 312 payload files match the accepted validation deployment |
+| Autonomous model/tool selection and hosted instance reconstruction | NOT_RUN / UNVERIFIED; frontend reconnection is not evidence of instance reconstruction |
+| Linux CI and template/directory submission | NOT_RUN at the hosted phase-1 cutoff; CI results are attached to the exact Git commit; no template/directory submitted |
+| Public source rollout | This source change is separate from merging main or publishing a deploy template; the protected validation Worker is not a public demo |
+
+The historical September local browser smoke used SDK `1.2.0` and MiniMax M3
+after adapter normalization. It verified the old SDK identity tool against
+`/me`. It does not validate this SDK `2.0.0` / six-tool MCP candidate, model
+adoption, hosted Worker operation, or every provider. See
+[`LOCAL_VALIDATION.md`](LOCAL_VALIDATION.md) for the dated evidence boundaries.
+
+
+The locked native SDK must receive the current single-page tool catalog so
+all output validators remain installed. A paginated **tool catalog** is
+rejected until a compatibility review; Mission/search **result pagination**
+is unchanged. A missing output schema also blocks the affected read.

@@ -5,18 +5,20 @@
   "compatibility_date": "2026-06-11",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "AGENTEL_AGENT_ID": "agent_24823b7d-3ee3-4e35-8891-15d2d7d671c1",
+    "AGENTEL_AGENT_ID": "",
+    "AGENTEL_MAX_PAID_READS_PER_TURN": "3",
     "AGENTEL_API_BASE_URL": "https://agentel.tech/api/v1",
     "MODEL_API_BASE_URL": "https://api.openai.com/v1",
     "MODEL_NAME": "gpt-4.1-mini"
   },
   "secrets": {
-    "required": ["AGENTEL_API_KEY", "MODEL_API_KEY"]
+    "required": ["AGENTEL_READER_KEY", "DEMO_ACCESS_TOKEN", "MODEL_API_KEY"]
   },
   "assets": {
+    "binding": "ASSETS",
     "directory": "./public",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/agents/*", "/oauth/*"]
+    "run_worker_first": true
   },
   "durable_objects": {
     "bindings": [

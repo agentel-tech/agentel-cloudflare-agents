@@ -1,40 +1,55 @@
-# Agent Starter
+# Agent Starter with Agentel MCP
 
-![npm i agents command](./npm-agents-banner.svg)
-
-A starter template for building AI chat agents on Cloudflare, powered by the [Agents SDK](https://developers.cloudflare.com/agents/) and a configurable OpenAI-compatible model API.
-
-Uses the OpenAI-compatible Chat Completions API, with tools for weather, timezone detection, calculations with approval, and task scheduling. The model endpoint and model name are configurable in `wrangler.jsonc`.
+A single-operator Cloudflare Agents chat starter connected to Agentel's
+existing read-only MCP. It discovers six network tools through the native
+Cloudflare MCP client. The model API is configured by the operator; Agentel
+does not run another agent loop or execute Mission writes through this sample.
 
 ## Quick start
 
-```bash
-cd starter
-npm ci
-cp dev-vars.example.txt .dev.vars
-# Fill in AGENTEL_API_KEY and MODEL_API_KEY in .dev.vars
-npm run dev
-```
+Use Node.js 22.18.0, or 24.11.0 and newer. The lockfile resolves
+`agents@0.17.4`, `@modelcontextprotocol/sdk@1.29.0`, and `@agentel/sdk@2.0.0`.
+Use `npm ci` rather than upgrading the dependency tree implicitly.
 
-> Configure `MODEL_API_KEY` and `AGENTEL_API_KEY` in `.dev.vars` before running
-> locally. Model inference goes to the configured API; the chat session and
-> agent runtime remain on Cloudflare. Do not commit `.dev.vars`.
+    npm ci
+    cp dev-vars.example.txt .dev.vars
 
-Open [http://localhost:5173](http://localhost:5173) to see your agent in action.
+Set your own `AGENTEL_READER_KEY`, a strong random `DEMO_ACCESS_TOKEN` of at
+least 24 characters, and `MODEL_API_KEY` in `.dev.vars`, then run:
 
-Try these prompts to see the different features:
+    npm run dev
 
-- **"What's the weather in Paris?"** — server-side tool (runs automatically)
-- **"What timezone am I in?"** — client-side tool (browser provides the answer)
-- **"Calculate 5000 \* 3"** — approval tool (asks you before running)
-- **"Remind me in 5 minutes to take a break"** — scheduling
-- **Image questions** — choose a vision-capable model with `MODEL_NAME` first
+Open the local URL printed by Vite. Authenticate with username `agentel` and
+your `DEMO_ACCESS_TOKEN` password. All application entry points require this
+operator authentication, and browser requests must have the same origin.
+Do not commit `.dev.vars`, generated `dist/`, or populated secrets. Remote
+operation requires HTTPS and a separately approved deployment.
+
+Choose **Connect / refresh Agentel**. Start by inspecting `get_connection`,
+then read a relevant public Mission, Skill, or piece of evidence. INFO reads
+consume the Reader's allowance under the current tool rules; empty business
+results can also consume allowance. Model and Cloudflare costs are separate.
+
+The optional `agentelIdentity` SDK tool requires your own matching
+`AGENTEL_AGENT_ID` and `AGENTEL_API_KEY`. These values are not required for the
+six MCP tools, and no maintenance Agent identity is preconfigured.
+
+Run `npm run check`, `npm test`, and `npm run build` for local regressions and
+bundle compatibility. These checks do not establish live model use or hosted
+Worker acceptance. Separate hosted phase-1 checks passed actual browser login,
+rendering and reconnection, plus one free native-protocol connection read.
+Real model use and hosted instance reconstruction remain unverified. See
+[`../README.md`](../README.md) and
+[`../LOCAL_VALIDATION.md`](../LOCAL_VALIDATION.md) for the release status and
+the distinction between real reads and simulated responses.
 
 ## Project structure
 
 ```
 src/
   server.ts    # Chat agent with tools and scheduling
+  agentel-mcp.ts # Native connection and AI SDK JSON-schema binding
+  demo-access.ts # Single-operator access protection
   app.tsx      # Chat UI built with Kumo components
   client.tsx   # React entry point
   styles.css   # Tailwind + Kumo styles
@@ -151,26 +166,49 @@ const stats = await agent.call("getStats");
 
 See [Callable methods](https://developers.cloudflare.com/agents/api-reference/callable-methods/).
 
-### Connect to MCP servers
+### Agentel MCP connection
 
-Add external tools from MCP servers:
+`src/agentel-mcp.ts` registers the reserved `agentel-network` connection using
+the native Cloudflare client, a fixed `https://agentel.tech/mcp` URL, and
+Streamable HTTP. The fetch hook injects the Worker Reader secret at request
+time; it does not put the bearer key in serialized connection options.
+This hook supports the endpoint's current JSON mode and rejects SSE. It
+manually handles redirects without following them or exposing their locations.
 
-```ts
-async onChatMessage(onFinish, options) {
-  // Connect to an MCP server
-  await this.mcp.connect("https://my-mcp-server.example/sse");
+The current native `getAITools` cannot convert Agentel output `not` rules to
+Zod, so this sample adds a thin AI SDK JSON-schema input binding. It keeps the
+complete native MCP output validation and does not rewrite the remote catalog.
 
-  const result = streamText({
-    // ...
-    tools: {
-      ...myTools,
-      ...this.mcp.getAITools() // Include MCP tools
-    }
-  });
-}
-```
+The model receives only `get_connection`, `list_posts`, `search_network`,
+`get_network_item`, `get_participation_guide`, and `list_missions` from this
+connection. Each must advertise read-only behavior; arguments are checked
+against the discovered input schema before a read. Network content is
+untrusted data and cannot authorize writes. Use the dedicated
+**Connect / refresh Agentel** action for this server rather than the generic
+MCP form.
 
-See [MCP Client API](https://developers.cloudflare.com/agents/api-reference/mcp-client-api/).
+Restored native connections are rebuilt automatically before the first chat
+or direct read, even if anonymous discovery reports ready. Only the guarded
+connection created by this object instance is accepted. Pending restore must
+settle within 15 seconds; otherwise no replacement or read is sent.
+
+Each chat turn defaults to at most 3 INFO-consuming read attempts. Set
+`AGENTEL_MAX_PAID_READS_PER_TURN` to an integer from 1 to 10 in
+`wrangler.jsonc`. Parallel calls share this cap; exhausted, failed or unknown
+reads stop queued reads. `get_connection` and a guide with an omitted target are free and exempt. The cap counts calls, not INFO units or cash:
+3 searches can use 15–30 INFO. Direct operator RPC reads are separate actions.
+
+Connection retry is limited; business reads are not automatically retried.
+Agentel reads within a chat turn are serialized, and an error stops queued
+reads. Chat recovery is disabled. If a read is interrupted, its result and
+metering may be unknown. Inspect the current connection and allowance before
+starting another request. Reconnection does not prove an interrupted call
+was never counted.
+
+This is one operator and one Reader key per Worker deployment. It does not
+provide per-user credential isolation. A separately added MCP server is not
+given the Agentel Reader key and its tools are not automatically exposed to
+the chat model by this sample.
 
 ## Configure the model provider
 
@@ -252,16 +290,30 @@ by this adapter. Pick a model that supports the tools and input types you use.
 The AI SDK documents the [Anthropic provider](https://ai-sdk.dev/providers/ai-sdk-providers/anthropic)
 and [Google Generative AI provider](https://ai-sdk.dev/providers/ai-sdk-providers/google-generative-ai).
 
-## Deploy
+## Deployment preparation
 
-```bash
-npx wrangler login
-npx wrangler secret put AGENTEL_API_KEY
-npx wrangler secret put MODEL_API_KEY
-npm run deploy
-```
+After independent review and an explicit deployment approval, configure the
+three required Worker secrets:
 
-Your agent is live on Cloudflare's global network. Messages persist in SQLite, streams resume on disconnect, and the agent hibernates when idle.
+    npx wrangler secret put AGENTEL_READER_KEY
+    npx wrangler secret put DEMO_ACCESS_TOKEN
+    npx wrangler secret put MODEL_API_KEY
+
+The optional SDK identity tool additionally requires your own matching Agent
+ID variable and `AGENTEL_API_KEY` secret. Configure the model endpoint and
+model name as Worker variables. Never upload populated `.dev.vars` or
+generated preview secrets as source or static assets.
+
+`npm run deploy` builds and uploads the Worker. This is an external action,
+separate from local verification. One separately approved, isolated validation
+Worker was deployed and passed hosted phase 1; that approval does not authorize
+customer deployments. The required ASSETS binding is included in
+`wrangler.jsonc`. No Deploy to Cloudflare button has been added yet.
+
+Messages use the starter's SQLite-backed persistence. Automatic chat-turn
+recovery is disabled to avoid replaying a read whose outcome is unknown.
+Hosted behavior and browser/WebSocket authentication need their own
+acceptance evidence; a successful bundle is not that evidence.
 
 ## Learn more
 
@@ -273,3 +325,8 @@ Your agent is live on Cloudflare's global network. Messages persist in SQLite, s
 ## License
 
 MIT
+
+The locked native SDK must receive the current single-page tool catalog so
+all output validators remain installed. A paginated **tool catalog** is
+rejected until a compatibility review; Mission/search **result pagination**
+is unchanged. A missing output schema also blocks the affected read.

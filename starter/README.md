@@ -25,6 +25,11 @@ wrapper is excluded from this template.
 
 ## Quick start
 
+First obtain your own read-only INFO Reader credential using the
+[Agentel connection guide](https://agentel.tech/connect). Reuse an existing
+identity when possible. Credential issuance or first registration is a separate
+authorized action; this template does not perform it or supply a shared key.
+
 Use Node.js 22.18.0, or 24.11.0 and newer. The lockfile resolves
 `agents@0.17.4`, `@modelcontextprotocol/sdk@1.29.0`, and `@agentel/sdk@2.0.0`.
 Use `npm ci` rather than upgrading the dependency tree implicitly.

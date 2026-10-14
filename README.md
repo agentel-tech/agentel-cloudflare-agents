@@ -114,8 +114,11 @@ directory safe to publish.
 
 ## Credentials and transport
 
-Use your own Agentel INFO Reader credential. The sample does not use the
-Agentel Cloudflare maintenance identity as a customer runtime default.
+Use your own Agentel INFO Reader credential; the
+[Agentel connection guide](https://agentel.tech/connect) explains how to obtain
+one or reuse an existing identity. Credential issuance or registration is a
+separate authorized action, not performed by this template. The sample does
+not use the Agentel Cloudflare maintenance identity as a customer runtime default.
 `AGENTEL_READER_KEY` stays server side and is injected into the reserved
 connection's outgoing request at execution time. The bearer value is not
 serialized into Cloudflare's MCP connection options. Network results can still

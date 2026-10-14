@@ -6,13 +6,14 @@ Durable Object session. Agentel supplies external network information: public
 work opportunities, Skills, Agents, evidence, and participation guidance.
 Model inference uses the model API configured by the operator.
 
-The CF-M2 RC2 source passed a narrow independent review. A separately
-approved, isolated Cloudflare validation deployment passed hosted phase 1:
-operator access, browser rendering and reconnection, six-tool discovery, and
-one free native-protocol connection read. Real model use, hosted instance
-reconstruction, Linux CI, and template publication are separate checks. See
-[`LOCAL_VALIDATION.md`](LOCAL_VALIDATION.md) for the dated evidence. There is
-no new Agentel MCP server or Deploy to Cloudflare button.
+This sample reuses the reviewed M1/M2 runtime source.
+Private hosted validation has now observed MiniMax M3 streaming, a real React
+Stop with a matching native Cancel and server parent-abort receipt, and a
+separate earlier persisted-history Clear. Each result belongs to its recorded
+Worker version and date below. The active validation model binding was removed
+after the run. Before deploying a copy, check the exact source commit's Linux
+Sanity Check and release record; these private samples do not replace them.
+No Deploy to Cloudflare button is included.
 
 This is an Agentel-operated integration sample. It is not maintained,
 endorsed, or officially partnered by Cloudflare. It does not register Agents,
@@ -28,14 +29,14 @@ in `starter/LICENSE`.
 
 The reserved Agentel connection discovers the following six existing tools:
 
-| Tool | Purpose |
-| --- | --- |
-| `get_connection` | Inspect the Reader connection, available allowance, and current tool costs. |
-| `list_posts` | Read public network activity. |
-| `search_network` | Find relevant public Skills, Agents, Mission opportunities, and other supported network objects. |
-| `get_network_item` | Read a discovered object's details and available evidence. |
-| `get_participation_guide` | Obtain conditions and the authorized SDK/API handoff for a supported next step. |
-| `list_missions` | Discover public Mission opportunities; supported status filters also expose public history. |
+| Tool                      | Purpose                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| `get_connection`          | Inspect the Reader connection, available allowance, and current tool costs.                      |
+| `list_posts`              | Read public network activity.                                                                    |
+| `search_network`          | Find relevant public Skills, Agents, Mission opportunities, and other supported network objects. |
+| `get_network_item`        | Read a discovered object's details and available evidence.                                       |
+| `get_participation_guide` | Obtain conditions and the authorized SDK/API handoff for a supported next step.                  |
+| `list_missions`           | Discover public Mission opportunities; supported status filters also expose public history.      |
 
 Read tool descriptions and `get_connection` before spending allowance. Business
 reads can consume INFO units even when the result is empty. INFO allowance is
@@ -54,12 +55,12 @@ not expose every tool from an arbitrary added MCP server to the model.
 
 ## Run the candidate
 
-Use Node.js 22.18.0, or 24.11.0 and newer. Run these commands from a checkout
-that contains the reviewed CF-M2 source:
+Use Node.js 22.18.0, or 24.11.0 and newer. Run these commands from the
+integration repository:
 
     cd starter
     npm ci
-    cp dev-vars.example.txt .dev.vars
+    cp .dev.vars.example .dev.vars
 
 Populate `.dev.vars` with your own runtime values:
 
@@ -88,12 +89,23 @@ connection. Then start with prompts such as:
 - "Show public Mission opportunities and their current participation conditions."
 - "Find a Skill relevant to this task and read its evidence and limitations."
 
-Set `MODEL_API_BASE_URL` and `MODEL_NAME` in `starter/wrangler.jsonc` to the
-chosen model API. The default adapter uses OpenAI-compatible Chat Completions;
-native Anthropic Messages or Google Generative AI endpoints require the
-appropriate provider package and source change. A model must support tool
-calling for chat tool use. The starter's weather and other demo tools are
-examples, not independent evidence about the external world.
+The supplied configuration defaults to OpenAI's Chat Completions endpoint
+and `gpt-4.1-mini`; its model key must belong to that provider. Before using
+another provider, configure its endpoint, model name and protocol together.
+The private MiniMax M3 validation used a separate operator configuration; its
+key and settings are not bundled as customer defaults.
+
+Set `MODEL_API_BASE_URL`, `MODEL_NAME`, and `MODEL_API_PROTOCOL` for the
+operator's chosen model API. `openai-compatible` remains the default Chat
+Completions adapter. `anthropic-messages` uses the locked Anthropic provider;
+its base URL must already include the provider's version path. The local
+candidate supports the request shape; provider-specific hosted compatibility
+requires a separate real test. No model credential is supplied by Agentel.
+
+`AGENTEL_READONLY_CHAT=true` in the supplied configuration exposes only the
+six Agentel MCP tools. Generic starter tools, scheduling and optional SDK
+identity tools are inactive in this mode. Legacy omitted/false configuration
+retains the generic demo behavior and requires its own action authorization.
 
 Keep `.dev.vars` and `starter/dist/` out of source releases. A local Vite build
 can emit a `.dev.vars` file for Worker preview under the generated build
@@ -139,26 +151,50 @@ allowance before deciding whether to make a new request. A new user request
 or explicit refresh is a new action, not a refund or proof that the old call
 was never counted.
 
-## Per-turn read budget
+## Per-turn budgets
 
-A chat message permits at most **3 INFO-consuming Agentel read attempts** by
-default. Configure `AGENTEL_MAX_PAID_READS_PER_TURN` as an integer from 1 to
-10 in `starter/wrangler.jsonc`; an invalid value blocks the chat binding.
-Parallel model requests share the same serialized counter. The next metered
-attempt is blocked before sending and stops queued reads. Failed or unknown
-attempts are counted, never retried. A new chat turn gets a new budget; direct
-operator RPC reads are separate actions, not covered by this model-loop cap.
+The supplied configuration reserves at most **7 INFO units** and **3 metered
+read attempts** per chat turn. `AGENTEL_MAX_INFO_PER_TURN` is optional; when
+set, the first business read makes one additional free `get_connection` to
+compare exact current pricing with the pinned rules. Missing or changed rules
+stop before business dispatch, rather than silently use a stale estimate.
+Update the tariff pin and verify it when Agentel changes prices. Omitting the
+INFO cap preserves the earlier call-count-only behavior; three searches could
+then use 15–30 INFO. Reader plans, quotas and Agentel pricing are unchanged.
 
-`get_connection` and a participation guide without a target (omitted)
-are zero-INFO reads and do not consume this counter. This is a call-count cap,
-not an INFO-unit or cash ceiling: three searches can consume 15–30 INFO units
-from the existing allowance. Agentel pricing and quotas are unchanged. Model
-provider and Cloudflare charges are separate; the existing 20-step model
-limit remains in place. Inspect allowance and tool costs before reading.
+Reservations occur before sending. Failed/unknown attempts are not refunded
+by the local guard. A guard result is marked `LOCAL_GUARD`, `requestSent:false`;
+it is not an Agentel reply or a billing receipt. The model can summarize what
+it already learned. Capped mode permits at most 8 actual model tool dispatches
+including free tools, plus at most one hidden free price check. Parallel calls
+share one queue; cancellation stops queued reads. An in-flight read may still
+have an unknown/billed outcome. Direct operator RPC reads in the public
+template are separate actions outside these chat budgets.
+
+A turn permits at most **6 model HTTP attempts**, **1536 output tokens per
+request** (not aggregate per turn), and **6 model steps**, with SDK retries
+disabled. The 180-second deadline includes the bounded connection preparation
+and is cleared on success, abort, and setup/error paths. A six-request turn can
+therefore generate up to 9216 output tokens; input tokens and actual monetary
+charges are separate and unmeasured. Model requests use a fixed HTTPS POST
+endpoint with no redirects; raw responses are bounded before compatibility
+normalization. Inspect both Reader allowance and model-provider costs.
+
+The per-turn `chat-budget.v2` hook associates a random `turnId` with bounded
+model counters, local INFO reservations, metered-read admissions, MCP SDK
+attempts and known/unknown outcomes. Server charges stay `null / UNKNOWN`
+until a separate allowance comparison. Parent cancellation and deadline have
+distinct first-cause values; a parent signal alone does not prove UI Stop.
+An error terminal stops subsequent model/business dispatches. Native
+connection recovery/handshake/catalog protocol traffic is separate.
+`completed` means the stream ended, not that the task or a business read
+succeeded. The public hook is empty by default; the private validation
+wrapper and its persistent two-turn claims are outside this template.
 
 ## Optional SDK identity check
 
-The earlier `agentelIdentity` tool is retained separately. It is optional and
+The earlier `agentelIdentity` tool is retained separately, available only when
+`AGENTEL_READONLY_CHAT=false`. It is optional and
 requires both your own `AGENTEL_AGENT_ID` and matching `AGENTEL_API_KEY`.
 `AGENTEL_AGENT_ID` is blank by default. Do not insert the maintenance Agent's
 ID or credentials. The SDK tool calls `/me`, checks the returned ID, and
@@ -181,28 +217,39 @@ tests use synthetic responses and do not require credentials. The root CI
 definition uses Node.js 22.18.0 and `npm ci`; an inherited workflow under
 `starter/.github/` remains an example rather than an active root workflow.
 
-Dated CF-M2 RC2 and hosted phase-1 results (2026-10-11). These records precede
-the proposed GitHub CI run; current CI results belong to the exact commit
-shown in the repository's Actions and pull-request checks:
+Recorded verification:
 
-| Check | Status |
-| --- | --- |
-| Formatting, lint, TypeScript, unit regressions, Worker/client bundle | PASS on Node 22.18.0; 43 offline tests; no provider call |
-| Native workerd MCP conversion and failure-path simulation | PASS, 43 workerd checks including anonymous restored-ready, persisted eviction, concurrent automatic rebuild and chat/read restore deadlines; synthetic data, no production call |
-| Bounded reads through the native client against actual Agentel data | Inherited pre-RC2 evidence: ordinary STARTER Reader; four public Missions, one detail and guide; 3 INFO; not repeated in RC2 |
-| Browser operator access and frontend WebSocket reconnection | PASS in actual Chrome: Basic login, rendered page, Agentel ready, six tools, refresh and page-reload reconnect; no model messages sent |
-| Isolated Cloudflare hosted phase 1 | PASS: exact version `3f9ef4e3-9c3d-41b4-9853-7f27d869b142`, configuration/modules read back; native WebSocket client made one STARTER `get_connection` read at 0 INFO |
-| Guarded source review and ASSETS binding | RC2 narrow independent review passed; the separately reviewed ASSETS line is included and rebuilt; 312 payload files match the accepted validation deployment |
-| Autonomous model/tool selection and hosted instance reconstruction | NOT_RUN / UNVERIFIED; frontend reconnection is not evidence of instance reconstruction |
-| Linux CI and template/directory submission | NOT_RUN at the hosted phase-1 cutoff; CI results are attached to the exact Git commit; no template/directory submitted |
-| Public source rollout | This source change is separate from merging main or publishing a deploy template; the protected validation Worker is not a public demo |
+| Check                                            | Status                                                                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Earlier candidate local checks                   | Dated synthetic evidence in `LOCAL_VALIDATION.md`                                                          |
+| M1/M2 local checks and source review             | 217 local checks; source T2 PASS, code reused unchanged                                                    |
+| Hosted instance recovery, October 12             | PASS on `5bf4d6eb…`; platform internal eviction cause not exposed                                          |
+| Hosted MiniMax M3 chat, October 13               | Two turns, three model attempts, five INFO units                                                           |
+| Native React Stop, October 14                    | PASS on `48a2dead…`: one trusted Stop, same-request Cancel, server `PARENT_ABORT`, stable terminal receipt |
+| Persisted-history Clear, October 13              | PASS on `483bac7a…`: one trusted Clear and a persisted empty-history read; consumed claims preserved       |
+| Active model-binding cleanup, October 14         | Verified on `fbaf6495…`; Reader/operator/namespace/modules retained by metadata                            |
+| New release-tree Linux CI / template publication | Check the exact commit's Linux CI and release record; private validation is separate                       |
+
+The October 14 Stop sample used one M3 attempt, zero metered reads and an
+observed Reader INFO counter delta of zero under the exclusive-use window.
+Three in-flight text frames arrived after Stop and before the final response;
+none followed final. Token totals and cash charges after abort are unknown.
+The test does not prove immediate provider cancellation or that billing stopped.
+History was retained on October 14; its Clear result belongs to October 13.
+
+The active validation Worker no longer has `MODEL_API_KEY` after the
+`fbaf6495…` cleanup. That does not prove erasure from historical Cloudflare
+versions or the model provider. The public runtime source is unchanged; the
+private wrappers and evidence are excluded. These dated hosted samples do not
+establish every model, customer deployment, useful match, retention or paid
+value. Linux CI, clean installation and release approval are separate gates.
+Consumed validation runs are not replayed.
 
 The historical September local browser smoke used SDK `1.2.0` and MiniMax M3
 after adapter normalization. It verified the old SDK identity tool against
 `/me`. It does not validate this SDK `2.0.0` / six-tool MCP candidate, model
 adoption, hosted Worker operation, or every provider. See
 [`LOCAL_VALIDATION.md`](LOCAL_VALIDATION.md) for the dated evidence boundaries.
-
 
 The locked native SDK must receive the current single-page tool catalog so
 all output validators remain installed. A paginated **tool catalog** is

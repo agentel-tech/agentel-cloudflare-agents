@@ -143,51 +143,68 @@ run predates only these guards, not the native transport/AI-binding fix; it
 was not replayed. Actual model-turn interruption remains untested.
 
 
-## CF-M2 RC2 and hosted phase 1 (2026-10-11)
+## Hosted chat / lifecycle local candidate (2026-10-12)
 
-This is a later result, not a rewrite of the dated historical records above.
-The existing September README clarification and its MiniMax smoke boundary
-remain preserved. The model/INFO/provider and deployment scopes are distinct.
+This isolated candidate is based on public Draft PR #1 commit
+`1df363e6729e1feee8109fb54e22734ee3733948`; it has not been pushed, merged,
+deployed or validated in the hosted browser. Historical checks above retain
+their own scope and do not validate this delta.
 
-- Narrow independent source review passed for RC2 source manifest
-  `c01bc11020794956f8939aa9fd83cb620899767be4d21b3a8bbc16800969ffd7`.
-  This closed the anonymous restored-ready transport issue and added a default
-  cap of three INFO-consuming attempts per model turn. The reviewer did not
-  rerun all 43 Node tests and 43 local workerd simulations; those remain Builder
-  evidence with synthetic data, not hosted recovery or real model evidence.
-- The separately reviewed one-line ASSETS binding is integrated. An isolated
-  Node 22.18.0 format/lint/TypeScript/build pass produced all 312 Worker/client
-  payload files byte-for-byte equal to the accepted validation deployment.
-  The final generated config includes `assets.binding: ASSETS`. Original dirty
-  work and historical sealed sources were not overwritten.
-- A separately authorized independent Worker was uploaded once and read back
-  at 100%: version `3f9ef4e3-9c3d-41b4-9853-7f27d869b142`. Its entry and two
-  Worker chunks matched frozen hashes. It has its own SQLite Durable Object
-  and static assets, no production routes, Cron, shared D1, or cross-Worker
-  bindings. Agentel's production web/MCP and Central were unchanged.
-- Real hosted HTTP checks rejected anonymous/wrong operator credentials with
-  401 and foreign-Origin/cross-site requests with 403. Authenticated HTML and
-  the entry JavaScript returned 200 with their frozen hashes.
-- A native WebSocket protocol client, separately from the browser, discovered
-  six guarded read-only tools and made one `get_connection` request with an
-  ordinary STARTER Reader. Its current rule cost was 0 INFO and its identity
-  was read-only. No application, assignment, delivery, reward, or SDK write was
-  performed. This phase initiated zero metered business reads and zero model
-  calls; one balance snapshot does not establish a global allowance delta.
-- Actual Chrome, with the existing operator Basic credential, rendered the
-  page and displayed Connected, Agentel ready, and six tools. Operator refresh
-  and a frontend page reload reconnected. No chat message or attachment was
-  sent. The password-manager save prompt was declined. The in-app browser's
-  Basic challenge was client-blocked; native Chrome succeeded without changing
-  the access policy. Opening the Worker by a cross-site link remains rejected.
-- Browser reload/reconnection does not prove that Cloudflare evicted and
-  reconstructed the Durable Object. Hosted reconstruction remains UNVERIFIED:
-  no platform lifecycle evidence was captured. No debug restart endpoint was
-  added. The existing local workerd reconstruction tests retain their scope.
-- Credentials were excluded from stored public evidence. The operator remains
-  responsible for the protected validation Worker's later teardown; that was
-  not performed by this acceptance run.
-- At this hosted phase-1 cutoff, Linux GitHub Actions, current model autonomous
-  Mission/Skill selection, an actual model cap experience, and template or
-  directory submission were not run. Check the exact Git commit's PR/Actions
-  result for later Linux CI; do not transfer a PASS between source versions.
+- Public Node tests: 92/92. Private observation/claim/browser-fixture Node tests:
+  32/32. Original native workerd regression: 43/43. Private RPC workerd checks:
+  8/8. Phase 1 update-guard fake-backend tests: 22/22. These are 197 local
+  checks with synthetic service/model data, not 197 real Agent trials.
+- Formatting, lint, TypeScript, Vite build, private-wrapper type check and
+  private bundle: passed. An offline Wrangler dry run emitted a byte-identical
+  private entry module; gzip size 633347 bytes. Credential loading and HTTP
+  fetch were disabled for builds. Localhost runtime harnesses used only fake
+  credentials and synthetic Agentel responses.
+- Exact `@ai-sdk/anthropic` 3.0.129 was added. Four locked dependency nodes were
+  added; no previously locked dependency version/integrity changed. npm used
+  two empty configurations and the public registry. SDK remains 2.0.0 and
+  agents remains 0.17.4.
+- New checks cover fixed model endpoints, bounded HTTP attempts, raw response
+  size before normalization, no automatic retry, INFO tariff drift, aggregate
+  INFO bounds, queue cancellation, local budget feedback and private persistent
+  two-turn claims. Synthetic provider success is not hosted M3 compatibility.
+- The private lifecycle probe/observation page and deployment guard are outside
+  the public repository candidate. They neither force reconstruction nor
+  expose keys. A nonce change must be observed on an unchanged WebSocket; idle
+  waiting alone is not evidence of hibernation.
+- Real hosted chat, post-idle reconstruction, UI cancellation, Linux CI for
+  this delta, independent T2, remote sync and template publication remain
+  NOT_RUN/PENDING. No production/model calls, INFO consumption or real credential
+  reads occurred in this local pass.
+
+Source and evidence manifests are held in the parent acceptance packet, not
+in this public template. See its ACCEPTANCE.md and REVIEW_REQUEST.md.
+
+## Hosted receipt / lock narrow increment (2026-10-13)
+
+This separate local candidate repairs the two Medium review findings. The
+earlier package and its actual T2 remain unchanged. New precise T2 is pending.
+
+- Node 26.4.0/npm 12.0.2 regenerated the lock offline with scripts and network
+  disabled. All 677 existing non-root dependency nodes retain every field;
+  only the expected four new nodes and root Anthropic dependency remain.
+- Public Node tests 112/112 and private Node tests 39/39 passed. Native
+  workerd checks passed: MCP 43, private RPC 8, chat cancellation 9 and error/
+  late-tool dispatch 6. Total 217 local checks, including 27 new Node cases.
+  Format, lint, public/private TypeScript, Vite and private/native bundles
+  passed on Node 22.18.0. No real credentials, provider or Agentel calls.
+- Actual locked cancellation can stop the UI response reader before AI SDK
+  onAbort runs. A direct signal listener now records one terminal. An error
+  event also hard-stops later dispatches without faking a parent/deadline
+  origin. Original failed logs are retained. Real SQLite links claims,
+  random turn IDs and terminals; missing terminals remain unknown and used.
+- SDK attempts, local INFO reservation/admission, unknown outcomes and
+  server charges are separate. Charges stay null/UNKNOWN. Stream completion
+  is not task success; parent abort is not a browser Stop proof.
+- The native tests use synthetic upstreams and manually bound transport
+  IDs. A separate bridge experiment observes workerd reader.cancel settled
+  while the Node callback is not exposed. It does not prove a vendor stops
+  processing or billing. All 310 client assets equal the earlier local build.
+- The original deployed version passed the second actual retained-WebSocket
+  recovery observation. That evidence does not validate this new source or
+  hosted model chat. Actual browser Stop, M3 hosted use, incremental Linux CI,
+  GitHub synchronization and template publication remain uncompleted.

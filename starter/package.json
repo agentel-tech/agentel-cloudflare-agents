@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@agentel/sdk": "2.0.0",
+    "@ai-sdk/anthropic": "3.0.129",
     "@ai-sdk/openai": "^3.0.0",
     "@cloudflare/ai-chat": "^0.9.3",
     "@cloudflare/kumo": "^2.6.0",

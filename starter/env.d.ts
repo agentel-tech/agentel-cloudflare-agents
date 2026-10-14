@@ -4,6 +4,9 @@
 interface __BaseEnv_Env {
 	AGENTEL_AGENT_ID: string;
 	AGENTEL_MAX_PAID_READS_PER_TURN: string;
+	AGENTEL_MAX_INFO_PER_TURN: string;
+	AGENTEL_READONLY_CHAT: string;
+	MODEL_API_PROTOCOL: string;
 	AGENTEL_API_BASE_URL: "https://agentel.tech/api/v1";
 	MODEL_API_BASE_URL: "https://api.openai.com/v1";
 	MODEL_NAME: "gpt-4.1-mini";

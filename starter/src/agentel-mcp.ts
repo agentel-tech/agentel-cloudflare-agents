@@ -1,6 +1,13 @@
 import type { Agent } from "agents";
 import { z } from "zod";
 import { jsonSchema } from "ai";
+import {
+  agentelInfoLimit,
+  createInfoBudget,
+  MAX_AGENTEL_MODEL_TOOL_CALLS,
+  type AgentelTurnMeter,
+  type InfoBudgetBindings
+} from "./info-budget.ts";
 
 export const AGENTEL_MCP_URL = "https://agentel.tech/mcp";
 export const AGENTEL_SERVER_ID = "agentel-network";
@@ -14,7 +21,7 @@ export const AGENTEL_TOOL_NAMES = [
 ] as const;
 
 type McpHost = { mcp: Agent["mcp"] };
-export type ReaderBindings = {
+export type ReaderBindings = InfoBudgetBindings & {
   AGENTEL_READER_KEY?: string;
   AGENTEL_MAX_PAID_READS_PER_TURN?: string;
 };
@@ -195,9 +202,8 @@ export function isAgentelTool(
   return (AGENTEL_TOOL_NAMES as readonly string[]).includes(name);
 }
 
-export async function callAgentelTool(
+function validateAgentelArguments(
   host: McpHost,
-  env: ReaderBindings,
   name: string,
   args: Record<string, unknown>
 ) {
@@ -227,16 +233,44 @@ export async function callAgentelTool(
   } catch {
     throw new Error("Invalid Agentel read arguments.");
   }
-  try {
-    return redactReader(
-      await host.mcp.callTool(
-        { serverId: AGENTEL_SERVER_ID, name, arguments: args },
-        undefined,
-        { timeout: 15000 }
-      ),
-      env
+}
+
+export async function callAgentelTool(
+  host: McpHost,
+  env: ReaderBindings,
+  name: string,
+  args: Record<string, unknown>,
+  signal?: AbortSignal,
+  onDispatch?: () => (outcome: "success" | "businessError" | "unknown") => void
+) {
+  if (signal?.aborted)
+    throw new Error(
+      "Agentel MCP read stopped after cancellation. No read was sent."
     );
+  validateAgentelArguments(host, name, args);
+  let finishDispatch: ReturnType<NonNullable<typeof onDispatch>> | undefined;
+  try {
+    // After argument validation; this counts SDK calls, not server admissions.
+    finishDispatch = onDispatch?.();
+    const result = await host.mcp.callTool(
+      { serverId: AGENTEL_SERVER_ID, name, arguments: args },
+      undefined,
+      { timeout: 15000, ...(signal ? { signal } : {}) }
+    );
+    finishDispatch?.(
+      result.isError ||
+        (result.structuredContent &&
+          typeof result.structuredContent === "object" &&
+          "error" in result.structuredContent &&
+          result.structuredContent.error != null)
+        ? "businessError"
+        : "success"
+    );
+    if (signal?.aborted)
+      throw new Error("Agentel MCP read stopped after cancellation.");
+    return redactReader(result, env);
   } catch {
+    finishDispatch?.("unknown");
     throw new Error(
       "Agentel MCP read failed; stop and inspect the connection. No business-call retry was made."
     );
@@ -246,12 +280,25 @@ export async function callAgentelTool(
 export function agentelAiTools(
   host: McpHost,
   env: ReaderBindings,
-  onFailure: () => void = () => {}
+  onFailure: () => void = () => {},
+  signal?: AbortSignal,
+  meter?: AgentelTurnMeter
 ) {
   const readLimit = agentelReadLimit(env);
+  const infoLimit = agentelInfoLimit(env);
+  const infoBudget =
+    infoLimit === undefined ? undefined : createInfoBudget(infoLimit);
+  if (infoBudget) meter?.observeBudget(infoBudget.snapshot());
   let paidReadAttempts = 0;
+  let modelToolAttempts = 0;
   let failed = false;
   let queue: Promise<unknown> = Promise.resolve();
+  const checkAbort = () => {
+    if (signal?.aborted)
+      throw new Error(
+        "Agentel reads are stopped for this turn after cancellation."
+      );
+  };
   // agents 0.17.4 getAITools converts outputSchema to Zod and skips the
   // current Agentel catalog's unsupported `not` rules. Preserve JSON schemas
   // for model inputs; the native MCP client still validates complete outputs.
@@ -281,16 +328,64 @@ export function agentelAiTools(
                 "Agentel reads are stopped for this turn after an error."
               );
             try {
+              checkAbort();
+              if (
+                infoBudget &&
+                modelToolAttempts >= MAX_AGENTEL_MODEL_TOOL_CALLS
+              ) {
+                meter?.block("allToolLimit");
+                return infoBudget.stopForAllToolLimit();
+              }
               const toolName = definition.name;
+              // Invalid input must not reserve INFO or dispatch a tariff check.
+              validateAgentelArguments(host, toolName, args);
               if (consumesReadBudget(toolName, args)) {
-                if (paidReadAttempts >= readLimit)
+                if (paidReadAttempts >= readLimit) {
+                  meter?.block("paidReadLimit");
+                  if (infoBudget) return infoBudget.stopForReadLimit();
                   throw new Error(
                     "Agentel paid-read limit reached for this turn. Stop; start a new request only if the operator chooses."
                   );
+                }
+                if (infoBudget) {
+                  const localGuard = await infoBudget.reserve(
+                    toolName,
+                    args,
+                    () => {
+                      checkAbort();
+                      return callAgentelTool(
+                        host,
+                        env,
+                        "get_connection",
+                        {},
+                        signal,
+                        meter ? () => meter.dispatch("pricingCheck") : undefined
+                      );
+                    },
+                    signal
+                  );
+                  meter?.observeBudget(infoBudget.snapshot());
+                  checkAbort();
+                  if (localGuard) {
+                    meter?.block("infoLimit");
+                    return localGuard;
+                  }
+                }
                 // Reserve before sending, including failed/unknown attempts.
                 paidReadAttempts++;
+                meter?.admitPaidRead();
               }
-              const result = await callAgentelTool(host, env, toolName, args);
+              checkAbort();
+              if (infoBudget) modelToolAttempts++;
+              const result = await callAgentelTool(
+                host,
+                env,
+                toolName,
+                args,
+                signal,
+                meter ? () => meter.dispatch("modelSelected") : undefined
+              );
+              checkAbort();
               if (
                 result.isError ||
                 (result.structuredContent &&

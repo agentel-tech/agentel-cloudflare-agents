@@ -7,6 +7,9 @@
   "vars": {
     "AGENTEL_AGENT_ID": "",
     "AGENTEL_MAX_PAID_READS_PER_TURN": "3",
+    "AGENTEL_MAX_INFO_PER_TURN": "7",
+    "AGENTEL_READONLY_CHAT": "true",
+    "MODEL_API_PROTOCOL": "openai-compatible",
     "AGENTEL_API_BASE_URL": "https://agentel.tech/api/v1",
     "MODEL_API_BASE_URL": "https://api.openai.com/v1",
     "MODEL_NAME": "gpt-4.1-mini"

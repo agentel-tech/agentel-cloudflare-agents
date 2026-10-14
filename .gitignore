@@ -13,3 +13,6 @@
 
 # macOS
 **/.DS_Store
+
+# Public template placeholders only; populated secrets stay ignored.
+!starter/.dev.vars.example

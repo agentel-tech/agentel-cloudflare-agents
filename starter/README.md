@@ -5,6 +5,24 @@ existing read-only MCP. It discovers six network tools through the native
 Cloudflare MCP client. The model API is configured by the operator; Agentel
 does not run another agent loop or execute Mission writes through this sample.
 
+The supplied configuration uses only six read-only MCP tools, a 7-INFO local
+reservation cap and 3 metered attempts per turn. Model calls have hard request,
+output and deadline guards: at most 6 model HTTP attempts and 6 steps,
+1536 output tokens per request, and a 180-second turn deadline. Input tokens,
+model-provider charges and Cloudflare usage are separate from INFO allowance.
+The generic demo-tool/scheduling examples below are inactive while
+`AGENTEL_READONLY_CHAT=true` (the supplied default).
+
+Each turn has a `chat-budget.v2` terminal receipt hook with a random `turnId`,
+local INFO reservations, metered-read admissions and MCP SDK call attempts.
+These counters do not prove server receipt or actual charging; the charge
+field stays unknown until separately checked against the Reader's allowance.
+The first parent cancellation or 180-second deadline is recorded separately.
+A parent cancellation alone does not prove a browser Stop click. The public
+hook is empty by default; an operator may persist the bounded receipt without
+saving prompts, responses or credentials. The private hosted-validation
+wrapper is excluded from this template.
+
 ## Quick start
 
 Use Node.js 22.18.0, or 24.11.0 and newer. The lockfile resolves
@@ -12,7 +30,7 @@ Use Node.js 22.18.0, or 24.11.0 and newer. The lockfile resolves
 Use `npm ci` rather than upgrading the dependency tree implicitly.
 
     npm ci
-    cp dev-vars.example.txt .dev.vars
+    cp .dev.vars.example .dev.vars
 
 Set your own `AGENTEL_READER_KEY`, a strong random `DEMO_ACCESS_TOKEN` of at
 least 24 characters, and `MODEL_API_KEY` in `.dev.vars`, then run:
@@ -25,6 +43,11 @@ operator authentication, and browser requests must have the same origin.
 Do not commit `.dev.vars`, generated `dist/`, or populated secrets. Remote
 operation requires HTTPS and a separately approved deployment.
 
+The default model configuration uses OpenAI's endpoint and `gpt-4.1-mini`.
+Supply your own matching model key. For another provider, configure
+`MODEL_API_BASE_URL`, `MODEL_NAME` and `MODEL_API_PROTOCOL` together before
+running or deploying; the private MiniMax validation key is not included.
+
 Choose **Connect / refresh Agentel**. Start by inspecting `get_connection`,
 then read a relevant public Mission, Skill, or piece of evidence. INFO reads
 consume the Reader's allowance under the current tool rules; empty business
@@ -34,20 +57,24 @@ The optional `agentelIdentity` SDK tool requires your own matching
 `AGENTEL_AGENT_ID` and `AGENTEL_API_KEY`. These values are not required for the
 six MCP tools, and no maintenance Agent identity is preconfigured.
 
+Hosted checks now include a version-bound native React Stop sample (October 14) and a separate persisted-history Clear (October 13). Their scope and
+remaining CI/release checks are in the [integration README](https://github.com/agentel-tech/agentel-cloudflare-agents/blob/main/README.md). Provider billing after
+Stop remains unknown; no live credential or private validation wrapper is
+included in this directory.
+
 Run `npm run check`, `npm test`, and `npm run build` for local regressions and
 bundle compatibility. These checks do not establish live model use or hosted
-Worker acceptance. Separate hosted phase-1 checks passed actual browser login,
-rendering and reconnection, plus one free native-protocol connection read.
-Real model use and hosted instance reconstruction remain unverified. See
-[`../README.md`](../README.md) and
-[`../LOCAL_VALIDATION.md`](../LOCAL_VALIDATION.md) for the release status and
-the distinction between real reads and simulated responses.
+Worker acceptance. The [integration README](https://github.com/agentel-tech/agentel-cloudflare-agents/blob/main/README.md) and
+[dated local validation](https://github.com/agentel-tech/agentel-cloudflare-agents/blob/main/LOCAL_VALIDATION.md)
+record the release scope and distinguish real reads from simulated responses.
+Those links target the integration repository; this `starter/` can be copied
+and built independently, without its parent directory.
 
 ## Project structure
 
 ```
 src/
-  server.ts    # Chat agent with tools and scheduling
+  server.ts    # Read-only network chat; legacy demo tools are optional
   agentel-mcp.ts # Native connection and AI SDK JSON-schema binding
   demo-access.ts # Single-operator access protection
   app.tsx      # Chat UI built with Kumo components
@@ -57,10 +84,10 @@ src/
 
 ## What's included
 
-- **AI Chat** — Streaming responses powered by an OpenAI-compatible Chat Completions API via `AIChatAgent`
+- **AI Chat** — Streaming responses via `AIChatAgent`, with configured OpenAI-compatible or Anthropic Messages protocol
 - **Image input** — Drag-and-drop, paste, or click to attach images for vision-capable models
-- **Three tool patterns** — server-side auto-execute, client-side (browser), and human-in-the-loop approval
-- **Scheduling** — one-time, delayed, and recurring (cron) tasks
+- **Legacy tool patterns** — inactive in the supplied read-only mode
+- **Legacy scheduling** — inactive in the supplied read-only mode
 - **Reasoning display** — shows model thinking as it streams, collapses when done
 - **Debug mode** — toggle in the header to inspect raw message JSON for each message
 - **Kumo UI** — Cloudflare's design system with dark/light mode
@@ -305,10 +332,19 @@ model name as Worker variables. Never upload populated `.dev.vars` or
 generated preview secrets as source or static assets.
 
 `npm run deploy` builds and uploads the Worker. This is an external action,
-separate from local verification. One separately approved, isolated validation
-Worker was deployed and passed hosted phase 1; that approval does not authorize
-customer deployments. The required ASSETS binding is included in
-`wrangler.jsonc`. No Deploy to Cloudflare button has been added yet.
+separate from local verification. Dated private hosted checks observed M3 chat
+on October 13; a trusted React Stop, same-request Cancel and server
+`PARENT_ABORT` on October 14 (`48a2dead…`); and a separate persisted empty
+history after Clear on October 13 (`483bac7a…`). Earlier recovery belongs to
+`5bf4d6eb…`. Active model-binding removal was verified on October 14
+(`fbaf6495…`). Each result is limited to that version and configuration;
+provider processing and billing after Stop remain unknown.
+
+Before deploying, check the exact source commit's Linux Sanity Check and
+release record. Private hosted samples do not replace those checks. No Deploy
+to Cloudflare button is included. The standard `.dev.vars.example` supplies
+placeholders for secret prompts, not credentials or proof of a successful
+customer setup.
 
 Messages use the starter's SQLite-backed persistence. Automatic chat-turn
 recovery is disabled to avoid replaying a read whose outcome is unknown.

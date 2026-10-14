@@ -13,14 +13,17 @@
   "scripts": {
     "dev": "vite dev",
     "start": "vite dev",
+    "build": "vite build",
     "deploy": "vite build && wrangler deploy",
     "types": "wrangler types env.d.ts",
     "format": "oxfmt --write .",
     "lint": "oxlint src/",
-    "check": "oxfmt --check . && oxlint src/ && tsc"
+    "check": "oxfmt --check . && oxlint src/ && tsc",
+    "test": "node --experimental-strip-types --test test/*.test.mjs"
   },
   "dependencies": {
-    "@agentel/sdk": "1.2.0",
+    "@agentel/sdk": "2.0.0",
+    "@ai-sdk/anthropic": "3.0.129",
     "@ai-sdk/openai": "^3.0.0",
     "@cloudflare/ai-chat": "^0.9.3",
     "@cloudflare/kumo": "^2.6.0",
@@ -48,6 +51,9 @@
     "typescript": "^6.0.3",
     "vite": "^8.1.0",
     "wrangler": "^4.113.0"
+  },
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
   },
   "allowScripts": {
     "core-js-pure@3.49.0": true,

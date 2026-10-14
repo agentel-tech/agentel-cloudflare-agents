@@ -140,3 +140,6 @@ dist
 # Cloudflare
 .wrangler
 .dev.vars
+
+# Public template placeholders only; populated secrets stay ignored.
+!.dev.vars.example

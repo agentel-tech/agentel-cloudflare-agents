@@ -222,8 +222,11 @@ settle within 15 seconds; otherwise no replacement or read is sent.
 Each chat turn defaults to at most 3 INFO-consuming read attempts. Set
 `AGENTEL_MAX_PAID_READS_PER_TURN` to an integer from 1 to 10 in
 `wrangler.jsonc`. Parallel calls share this cap; exhausted, failed or unknown
-reads stop queued reads. `get_connection` and a guide with an omitted target are free and exempt. The cap counts calls, not INFO units or cash:
-3 searches can use 15–30 INFO. Direct operator RPC reads are separate actions.
+reads stop queued reads. `get_connection` and a guide with an omitted target
+are free and exempt. The supplied configuration also caps local reservations at
+7 INFO per turn. Only if you omit `AGENTEL_MAX_INFO_PER_TURN` and retain the
+call-count cap can 3 searches use 15–30 INFO. The call cap counts attempts, not
+INFO units or cash. Direct operator RPC reads are separate actions.
 
 Connection retry is limited; business reads are not automatically retried.
 Agentel reads within a chat turn are serialized, and an error stops queued
@@ -239,83 +242,32 @@ the chat model by this sample.
 
 ## Configure the model provider
 
-This sample uses an OpenAI-compatible Chat Completions API. Set `MODEL_API_KEY`
-in `.dev.vars` and configure `MODEL_API_BASE_URL` and `MODEL_NAME` in
-`wrangler.jsonc`. The defaults point to OpenAI; to use another provider, set
-its OpenAI-compatible API base URL and model name. Choose a model that supports
-tool calling for the included tools. Image questions require a vision-capable
-model.
+Use the existing bounded model adapter in `src/chat-model.ts`. Both supported
+protocol adapters are already installed by the lockfile; no extra install or
+replacement of the model construction is needed.
 
-### Provider adapter
+Set your own `MODEL_API_KEY` as a Worker secret and configure these Worker
+variables together before running or deploying:
 
-```ts
-import { createOpenAI } from "@ai-sdk/openai";
+| Protocol                                     | `MODEL_API_PROTOCOL` | `MODEL_API_BASE_URL`                                                                       | `MODEL_NAME`                                               |
+| -------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| OpenAI-compatible Chat Completions (default) | `openai-compatible`  | The provider's HTTPS base URL including its version path, e.g. `https://api.openai.com/v1` | A model supported by that provider; default `gpt-4.1-mini` |
+| Anthropic-compatible Messages                | `anthropic-messages` | The provider's HTTPS base URL including its version path; `/messages` is appended          | A model supported by that provider                         |
 
-const modelApi = createOpenAI({
-  name: "openai-compatible",
-  apiKey: this.env.MODEL_API_KEY,
-  baseURL: this.env.MODEL_API_BASE_URL
-});
-const result = streamText({
-  model: modelApi.chat(this.env.MODEL_NAME)
-  // ...
-});
-```
+The model key must belong to the configured provider. Choose a model that
+supports tool calling; image questions additionally need supported image input.
+The locked adapter forwards `MODEL_API_BASE_URL` for both protocols and keeps
+the existing request, output, deadline and no-retry guards. Changing only the
+URL does not switch protocols. Provider-specific hosted compatibility still
+requires a real test; the private MiniMax M3 configuration is not a supplied
+customer default.
 
-Set `MODEL_API_KEY` as a Worker secret and `MODEL_API_BASE_URL` plus
-`MODEL_NAME` as Worker variables. The endpoint must implement OpenAI-compatible
-Chat Completions. Other native APIs, such as Anthropic Messages or Google
-Generative AI, need their AI SDK provider adapter and corresponding code
-changes; changing the URL alone is not sufficient. The default install includes
-only the OpenAI-compatible adapter below; native-provider examples are optional
-changes for your fork.
+Other native protocols, including Google Generative AI, are not supported by
+this frozen template. Adding one is a separately reviewed fork change with its
+own budget and transport verification; do not replace `boundedChatModel` with
+an unguarded provider call.
 
 The Cloudflare Agents runtime remains independent of the model provider.
-
-### Native Anthropic API
-
-```bash
-npm install @ai-sdk/anthropic
-```
-
-Replace the OpenAI-compatible model construction in `src/server.ts`:
-
-```ts
-import { createAnthropic } from "@ai-sdk/anthropic";
-
-const anthropic = createAnthropic({ apiKey: this.env.MODEL_API_KEY });
-const result = streamText({
-  model: anthropic(this.env.MODEL_NAME)
-  // Keep the existing system prompt, messages, and tools.
-});
-```
-
-The provider uses Anthropic's native Messages API. `MODEL_API_BASE_URL` is not
-used by this adapter.
-
-### Native Google Generative AI API
-
-```bash
-npm install @ai-sdk/google
-```
-
-Replace the model construction with the Google provider:
-
-```ts
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-
-const google = createGoogleGenerativeAI({ apiKey: this.env.MODEL_API_KEY });
-const result = streamText({
-  model: google(this.env.MODEL_NAME)
-  // Keep the existing system prompt, messages, and tools.
-});
-```
-
-The provider uses Google's Generative AI API. `MODEL_API_BASE_URL` is not used
-by this adapter. Pick a model that supports the tools and input types you use.
-
-The AI SDK documents the [Anthropic provider](https://ai-sdk.dev/providers/ai-sdk-providers/anthropic)
-and [Google Generative AI provider](https://ai-sdk.dev/providers/ai-sdk-providers/google-generative-ai).
 
 ## Deployment preparation
 

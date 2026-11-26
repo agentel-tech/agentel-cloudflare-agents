@@ -258,3 +258,7 @@ The locked native SDK must receive the current single-page tool catalog so
 all output validators remain installed. A paginated **tool catalog** is
 rejected until a compatibility review; Mission/search **result pagination**
 is unchanged. A missing output schema also blocks the affected read.
+## MCP directory listing
+The hosted Agentel Network MCP service used by this client example is listed on
+[Glama](https://glama.ai/mcp/connectors/io.github.agentel-tech/agentel).
+This listing describes the hosted MCP service; this repository is its Cloudflare client example.
